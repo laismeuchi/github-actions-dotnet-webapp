@@ -1,0 +1,50 @@
+name: Push to main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        token: ${{secrets.GITHUB_TOKEN}}
+    - run: 
+        # do something
+        git push
+
+name: Create database backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Executa diariamente às 2h da manhã
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up MySQL
+      uses: mysql-actions/setup-mysql@v1
+      with:
+        mysql version: '8.0'
+
+    - name: Backup MySQL database
+      env:
+        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      run: |
+        mysqldump -u root -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE > backup.sql
+
+    - name: Upload backup to repository
+      uses: actions/upload-artifact@v2
+      with:
+        name: mysql-backup
+        path: backup.sql
