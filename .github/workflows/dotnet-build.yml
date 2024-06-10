@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        token: ${{ secrets.ACTION }}
+        token: ${{ secrets.ACTIONS_DEPLOY_KEY }}
     - run: |
         # do something
         git push
