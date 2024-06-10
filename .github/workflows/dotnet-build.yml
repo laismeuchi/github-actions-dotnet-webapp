@@ -1,32 +1,29 @@
-name: Push to main
+name: Geral
 
 on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 2 * * *' # Executa diariamente às 2h da manhã
+    - cron: '0 * * * *' # Executa a cada hora
+  workflow_dispatch:
 
 jobs:
-  build:
+  build_push:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
-        token: ${{secrets.GITHUB_TOKEN}}
-    - run: 
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - run: |
         # do something
         git push
 
-name: Create database backup
-
-on:
-  schedule:
-    - cron: '0 2 * * *' # Executa diariamente às 2h da manhã
-  workflow_dispatch:
-
-jobs:
-  backup:
+  create_database_backup:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -48,3 +45,21 @@ jobs:
       with:
         name: mysql-backup
         path: backup.sql
+
+  generate_hourly_log:
+    if: github.event.schedule == '0 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Generate log file
+      run: |
+        TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+        echo "Log generated at $TIMESTAMP" > hourly_log_$TIMESTAMP.txt
+
+    - name: Upload log file
+      uses: actions/upload-artifact@v2
+      with:
+        name: hourly-log
+        path: hourly_log_*.txt
